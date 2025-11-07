@@ -6,20 +6,26 @@ import joblib
 # Load the dataset
 df = pd.read_csv('fertilizer_dataset.csv')
 
-# Convert categorical variables to numeric
+# Encode categorical features
 df_encoded = pd.get_dummies(df, columns=['Soil Type', 'Crop Type', 'Weather Condition'])
 
-# Split the data into features and labels
+# Separate features and target variables
 X = df_encoded.drop(columns=['Fertilizer', 'Ratio'])
-y = df_encoded['Fertilizer']
+y_fertilizer = df_encoded['Fertilizer']
+y_ratio = df_encoded['Ratio']
 
-# Split into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Split the data
+X_train, X_test, y_train_fertilizer, y_test_fertilizer = train_test_split(X, y_fertilizer, test_size=0.2, random_state=42)
+_, _, y_train_ratio, y_test_ratio = train_test_split(X, y_ratio, test_size=0.2, random_state=42)
 
-# Train a Random Forest Classifier
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+# Train the model
+model_fertilizer = RandomForestClassifier(n_estimators=100, random_state=42)
+model_fertilizer.fit(X_train, y_train_fertilizer)
 
-# Save the model and feature columns
-joblib.dump(model, 'fertilizer_model.pkl')
+model_ratio = RandomForestClassifier(n_estimators=100, random_state=42)
+model_ratio.fit(X_train, y_train_ratio)
+
+# Save the models and column names
+joblib.dump(model_fertilizer, 'fertilizer_model.pkl')
+joblib.dump(model_ratio, 'ratio_model.pkl')
 joblib.dump(X.columns, 'X_columns.pkl')

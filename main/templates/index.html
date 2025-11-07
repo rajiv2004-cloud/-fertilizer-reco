@@ -1,98 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fertilizer Recommender</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Fertilizer Recommender — Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        input, select {
-            display: block;
-            width: 100%;
-            margin-bottom: 10px;
-            padding: 8px;
-            font-size: 16px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 18px;
-        }
-        button:hover {
-            background-color: #218838;
-        }
+        :root{--bg:#f4f7fb;--card:#fff;--muted:#6b7280;--accent:#16a34a;--shadow:0 6px 20px rgba(2,6,23,0.08);--radius:12px}
+        *{box-sizing:border-box}
+        html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;background:var(--bg);color:#0f172a}
+        .app{display:flex;min-height:100vh}
+        .sidebar{width:260px;background:linear-gradient(180deg,#fff,#f8fafc);padding:28px;border-right:1px solid rgba(15,23,42,0.04)}
+        .brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+        .brand .logo{width:42px;height:42px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+        .brand h2{font-size:16px;margin:0}
+        .nav{margin-top:8px}
+        .nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:var(--muted);text-decoration:none;margin-bottom:6px}
+        .nav a.active{background:rgba(16,185,129,0.12);color:var(--accent)}
+        .nav a:hover{background:rgba(15,23,42,0.03)}
+        .main{flex:1;display:flex;flex-direction:column}
+        .header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid rgba(15,23,42,0.04);background:transparent}
+        .header h1{font-size:18px;margin:0}
+        .content{padding:20px 28px;flex:1;overflow:auto}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:18px}
+        .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:var(--shadow)}
+        .card h3{margin:0 0 8px;font-size:14px;color:var(--muted)}
+        .metric{font-size:22px;color:#062b00;font-weight:700}
+        .small{font-size:12px;color:var(--muted)}
+        .chart-card{display:flex;flex-direction:column;height:320px}
+        .chart-card canvas{flex:1}
+        /* single centered chart */
+        .single-chart-outer{display:flex;align-items:center;justify-content:center;padding:20px}
+        .single-chart-card{width: 80%;max-width:95%;height:520px;display:flex;flex-direction:column}
+        .full-chart{flex:1;min-height:0}
+        canvas{width:100% !important;height:100% !important}
+    .form{max-width:720px}
+    .hidden{display:none}
+    .version{margin-top:18px;font-size:12px;color:var(--muted)}
+    .btn-row{display:flex;gap:10px;margin-top:8px}
+    .loading{margin-top:12px}
+    .mt-6{margin-top:6px}
+    .mt-8{margin-top:8px}
+        .field{display:flex;flex-direction:column;margin-bottom:12px}
+        label{font-size:13px;color:var(--muted);margin-bottom:6px}
+        select,input{padding:10px;border-radius:8px;border:1px solid rgba(15,23,42,0.06);font-size:14px}
+        .btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
+        .btn.secondary{background:#64748b}
+        .result{margin-top:14px;padding:12px;border-radius:8px;background:linear-gradient(90deg,rgba(16,185,129,0.06), #fff);border:1px solid rgba(16,185,129,0.12)}
+        .history-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+        .history-list{display:flex;flex-direction:column;gap:10px}
+        .history-item{background:var(--card);padding:12px;border-radius:8px;border-left:4px solid rgba(6,139,59,0.12)}
+        .muted{color:var(--muted)}
+        @media (max-width:780px){.sidebar{display:none}.main{padding-top:12px}.content{padding:12px}}
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h2>Fertilizer Recommender</h2>
-        <form id="fertilizerForm">
-            <label for="soil_type">Soil Type</label>
-            <select id="soil_type" name="soil_type">
-                <option value="Sandy">Sandy</option>
-                <option value="Clay">Clay</option>
-                <option value="Loam">Loam</option>
-            </select>
-            
-            <label for="crop_type">Crop Type</label>
-            <select id="crop_type" name="crop_type">
-                <option value="Wheat">Wheat</option>
-                <option value="Rice">Rice</option>
-                <option value="Maize">Maize</option>
-            </select>
-            
-            <label for="weather_condition">Weather Condition</label>
-            <select id="weather_condition" name="weather_condition">
-                <option value="Sunny">Sunny</option>
-                <option value="Rainy">Rainy</option>
-                <option value="Cloudy">Cloudy</option>
-            </select>
-            
-            <button type="submit">Get Recommendation</button>
-        </form>
-        <div id="result" style="margin-top: 20px;"></div>
+    <div class="app">
+        <aside class="sidebar" role="navigation" aria-label="Main navigation">
+            <div class="brand">
+                <div class="logo"><i class="fas fa-seedling"></i></div>
+                <div>
+                    <h2>FertilizerAI</h2>
+                    <div class="small muted">Smart recommendations</div>
+                </div>
+            </div>
+            <nav class="nav" aria-label="Primary">
+                <a href="#" id="link-analytics" class="active"><i class="fas fa-chart-line"></i> Analytics</a>
+                <a href="#" id="link-recommend"><i class="fas fa-leaf"></i> Recommendation</a>
+                <a href="#" id="link-history"><i class="fas fa-history"></i> History</a>
+            </nav>
+            <div class="version">Version 1.0</div>
+        </aside>
+        <main class="main">
+            <header class="header"><h1 id="pageTitle">Analytics</h1><div></div></header>
+            <section class="content">
+                <div id="page-analytics" class="page">
+                    <div class="grid">
+                        <div class="card"><h3>Today's Recommendations</h3><div class="metric" id="metric-today">0</div><div class="small muted">in last 24 hours</div></div>
+                        <div class="card"><h3>Total Recommendations</h3><div class="metric" id="metric-total">0</div><div class="small muted">stored locally</div></div>
+                        <div class="card"><h3>Most Frequent Weather</h3><div class="metric" id="metric-weather">-</div><div class="small muted">based on history</div></div>
+                    </div>
+                        <div class="single-chart-outer">
+                            <div class="single-chart-card card">
+                                <h3>Crop Distribution</h3>
+                                <div class="chart-wrapper full-chart">
+                                    <canvas id="chart-crop"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+                <div id="page-recommend" class="page hidden">
+                    <div class="card form">
+                        <h3>Get Recommendation</h3>
+                        <div class="field"><label for="soil">Soil Type</label><select id="soil" aria-label="Soil type"><option value="">Select soil</option><option>Sandy</option><option>Clay</option><option>Loam</option></select></div>
+                        <div class="field"><label for="crop">Crop</label><select id="crop" aria-label="Crop type"><option value="">Select crop</option><option>Wheat</option><option>Rice</option><option>Maize</option></select></div>
+                        <div class="field"><label for="weather">Weather</label><select id="weather" aria-label="Weather"><option value="">Select weather</option><option>Sunny</option><option>Rainy</option><option>Cloudy</option></select></div>
+                        <div class="btn-row"><button id="btnRecommend" class="btn">Generate</button><button id="btnClear" class="btn secondary" type="button">Clear</button></div>
+                        <div id="loading" class="loading hidden"><div class="small muted">Generating recommendation…</div></div>
+                        <div id="recResult" class="result hidden"><div><strong>Fertilizer:</strong> <span id="resFertilizer">-</span></div><div class="mt-6"><strong>Ratio:</strong> <span id="resRatio">-</span></div></div>
+                    </div>
+                </div>
+                <div id="page-history" class="page hidden">
+                    <div class="card">
+                        <h3>History</h3>
+                        <div class="history-controls">
+                            <select id="filterCrop" title="filter crop"><option value="">All crops</option></select>
+                            <select id="filterSoil" title="filter soil"><option value="">All soils</option></select>
+                            <select id="filterWeather" title="filter weather"><option value="">All weather</option></select>
+                            <input id="start" type="date" title="start date">
+                            <input id="end" type="date" title="end date">
+                            <button id="btnReset" class="btn secondary">Reset</button>
+                            <button id="btnExport" class="btn">Export CSV</button>
+                        </div>
+                        <div class="history-list" id="historyList"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
+<script>
+(function(){
+    const STORAGE_KEY='fert_suggestions_v1';
+    let suggestions=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 
-    <script>
-        document.getElementById('fertilizerForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const formData = new FormData(event.target);
-            const data = Object.fromEntries(formData.entries());
+    const els={
+        links:{analytics:document.getElementById('link-analytics'),recommend:document.getElementById('link-recommend'),history:document.getElementById('link-history')},
+        pages:{analytics:document.getElementById('page-analytics'),recommend:document.getElementById('page-recommend'),history:document.getElementById('page-history')},
+        title:document.getElementById('pageTitle'),
+        metricToday:document.getElementById('metric-today'),metricTotal:document.getElementById('metric-total'),metricWeather:document.getElementById('metric-weather'),
+    chartCrop:document.getElementById('chart-crop'),
+        soil:document.getElementById('soil'),crop:document.getElementById('crop'),weather:document.getElementById('weather'),btnRecommend:document.getElementById('btnRecommend'),btnClear:document.getElementById('btnClear'),loading:document.getElementById('loading'),recResult:document.getElementById('recResult'),resFertilizer:document.getElementById('resFertilizer'),resRatio:document.getElementById('resRatio'),
+        filterCrop:document.getElementById('filterCrop'),filterSoil:document.getElementById('filterSoil'),filterWeather:document.getElementById('filterWeather'),start:document.getElementById('start'),end:document.getElementById('end'),btnReset:document.getElementById('btnReset'),btnExport:document.getElementById('btnExport'),historyList:document.getElementById('historyList')
+    };
 
-            fetch('/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams(data),
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('result').textContent = `Recommended Fertilizer: ${data['Recommended Fertilizer']}`;
-            });
-        });
-    </script>
+    let charts={};
+    function createCharts(){
+        // only create the Crop Distribution chart (single chart view)
+        const c=distribution(suggestions,'crop');
+        charts.crop=new Chart(els.chartCrop.getContext('2d'),{type:'bar',data:{labels:Object.keys(c),datasets:[{label:'Count',data:Object.values(c),backgroundColor:'#16a34a'}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+    }
+    function updateCharts(){
+        if(charts.crop){
+            const c=distribution(suggestions,'crop');
+            charts.crop.data.labels=Object.keys(c);
+            charts.crop.data.datasets[0].data=Object.values(c);
+            charts.crop.update();
+        }
+    }
+
+    function lastNDays(n){const arr=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);arr.push(d);}return arr}
+    function lastNDaysCounts(n){const days=lastNDays(n);return days.map(day=>suggestions.filter(s=>new Date(s.timestamp).toDateString()===day.toDateString()).length)}
+    function distribution(items,key){return items.reduce((acc,it)=>{const k=it[key]||'Unknown';acc[k]=(acc[k]||0)+1;return acc;},{});}
+
+    function calcMetrics(){const today=new Date().toDateString();const todayCount=suggestions.filter(s=>new Date(s.timestamp).toDateString()===today).length;const total=suggestions.length;const weatherDist=distribution(suggestions,'weather');const mostWeather=Object.entries(weatherDist).sort((a,b)=>b[1]-a[1])[0];return{todayCount,total,mostWeather:mostWeather?mostWeather[0]:'-'}}
+    function renderMetrics(){const m=calcMetrics();els.metricToday.textContent=m.todayCount;els.metricTotal.textContent=m.total;els.metricWeather.textContent=m.mostWeather}
+
+    function fillSelect(sel,items,defaultLabel){if(!sel) return;sel.innerHTML='';const opt=document.createElement('option');opt.value='';opt.textContent=defaultLabel||'All';sel.appendChild(opt);items.forEach(it=>{const o=document.createElement('option');o.value=it;o.textContent=it;sel.appendChild(o)})}
+    function populateFilters(){fillSelect(els.filterCrop,[...new Set(suggestions.map(s=>s.crop))].filter(Boolean),'All crops');fillSelect(els.filterSoil,[...new Set(suggestions.map(s=>s.soil))].filter(Boolean),'All soils');fillSelect(els.filterWeather,[...new Set(suggestions.map(s=>s.weather))].filter(Boolean),'All weather')}
+
+    function applyHistoryFilters(){const fc=els.filterCrop.value;const fs=els.filterSoil.value;const fw=els.filterWeather.value;const st=els.start.value;const ed=els.end.value;return suggestions.filter(s=>{if(fc && s.crop!==fc) return false;if(fs && s.soil!==fs) return false;if(fw && s.weather!==fw) return false;if(st && new Date(s.timestamp) < new Date(st)) return false;if(ed && new Date(s.timestamp) > new Date(new Date(ed).getTime()+86400000-1)) return false;return true})}
+    function renderHistory(){if(!els.historyList) return;const filtered=applyHistoryFilters();els.historyList.innerHTML=filtered.map(s=>`<div class="history-item"><div><strong>${escapeHtml(s.crop)}</strong> — ${escapeHtml(s.soil)} (<span class="muted">${escapeHtml(s.weather)}</span>)</div><div class="small muted">${new Date(s.timestamp).toLocaleString()}</div><div class="mt-8">${escapeHtml(s.recommendation)}</div></div>`).join('')||'<div class="muted">No records</div>'}
+
+    function saveSuggestions(){localStorage.setItem(STORAGE_KEY,JSON.stringify(suggestions))}
+
+    els.links.analytics.addEventListener('click',(e)=>{e.preventDefault();showPage('analytics')});els.links.recommend.addEventListener('click',(e)=>{e.preventDefault();showPage('recommend')});els.links.history.addEventListener('click',(e)=>{e.preventDefault();showPage('history');populateFilters();renderHistory()});
+
+    els.btnRecommend.addEventListener('click',async(e)=>{
+        e.preventDefault();
+        const soil=els.soil.value.trim();
+        const crop=els.crop.value.trim();
+        const weather=els.weather.value.trim();
+        if(!soil||!crop||!weather){alert('Please select soil, crop and weather');return}
+        els.loading.classList.remove('hidden');
+        els.recResult.classList.add('hidden');
+        try{
+            const payload=new URLSearchParams({soil_type:soil,crop_type:crop,weather_condition:weather});
+            const resp=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:payload});
+            if(!resp.ok) throw new Error('Server error');
+            const data=await resp.json();
+            const fertilizer=data['Recommended Fertilizer']||data.recommendation||'Not available';
+            const ratio=data['Recommended Ratio']||data.ratio||'-';
+            els.resFertilizer.textContent=fertilizer;
+            els.resRatio.textContent=ratio;
+            els.recResult.classList.remove('hidden');
+            const recText=`Fertilizer: ${fertilizer} | Ratio: ${ratio}`;
+            suggestions.unshift({id:Date.now(),timestamp:new Date().toISOString(),soil,crop,weather,recommendation:recText});
+            if(suggestions.length>100) suggestions.pop();
+            saveSuggestions();renderMetrics();updateCharts();populateFilters();renderHistory()
+        }catch(err){
+            console.error(err);
+            alert('Failed to get recommendation — try again.')
+        }finally{
+            els.loading.classList.add('hidden')
+        }
+    });
+
+    els.btnClear.addEventListener('click',()=>{els.soil.value='';els.crop.value='';els.weather.value='';els.recResult.classList.add('hidden')})
+    els.btnReset.addEventListener('click',()=>{els.filterCrop.value='';els.filterSoil.value='';els.filterWeather.value='';els.start.value='';els.end.value='';renderHistory()})
+    els.btnExport.addEventListener('click',()=>{const rows=applyHistoryFilters().map(s=>[new Date(s.timestamp).toLocaleString(),s.crop,s.soil,s.weather,s.recommendation]);const csv=[['Date','Crop','Soil','Weather','Recommendation'],...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='fertilizer_history.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)})
+
+    function showPage(name){
+        els.links.analytics.classList.remove('active');
+        els.links.recommend.classList.remove('active');
+        els.links.history.classList.remove('active');
+        if(name==='analytics') els.links.analytics.classList.add('active');
+        if(name==='recommend') els.links.recommend.classList.add('active');
+        if(name==='history') els.links.history.classList.add('active');
+        // hide all pages
+        els.pages.analytics.classList.add('hidden');
+        els.pages.recommend.classList.add('hidden');
+        els.pages.history.classList.add('hidden');
+        if(name==='analytics'){els.pages.analytics.classList.remove('hidden');els.title.textContent='Analytics'}
+        if(name==='recommend'){els.pages.recommend.classList.remove('hidden');els.title.textContent='Get Recommendation'}
+        if(name==='history'){els.pages.history.classList.remove('hidden');els.title.textContent='History'}
+    }
+
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c])}
+
+    function init(){renderMetrics();createCharts();populateFilters();renderHistory();}
+    init();
+})();
+</script>
 </body>
 </html>
